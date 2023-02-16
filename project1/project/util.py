@@ -66,7 +66,10 @@ class Bandit:
         policy_name, policy_args = policy
         if policy_name == 'random': self.policy = RandomPolicy(arms)
         elif policy_name == 'greedy': self.policy = GreedyPolicy(arms, **policy_args)
-        else: print('Undefined policy specified.')
+        elif policy_name == 'gradient': self.policy = GradientPolicy(arms, **policy_args)
+        else: 
+            print('Undefined policy specified.')
+            exit()
         self.policy_name = policy_name
 
         self.timesteps = timesteps
@@ -75,10 +78,15 @@ class Bandit:
         self.rewards = np.zeros((self.runs, self.timesteps+1))
         self.actions = np.zeros((self.runs, self.timesteps+1))
 
+        # Greedy policy
         self.final_qs_from_policy = np.zeros((self.runs, len(self.arms)))
+        # Gradient policy
+        self.final_hs_from_policy = np.zeros((self.runs, len(self.arms)))
+        self.final_pis_from_policy = np.zeros((self.runs, len(self.arms)))
         
-    def simulate(self):
+    def simulate(self, verbose=False):
         for j in range(self.runs):
+            if (verbose): print(f'Run {j}', self.policy.H, self.policy.pis)
             for i in range(1, self.timesteps+1):
                 # Random policy - randomly choose an arm to pull between the available arms. 
                 # variable 'action' should store the index of the arm to be pulled
@@ -93,13 +101,26 @@ class Bandit:
 
                 # Call the policy's update functions as needed 
                 if self.policy_name == 'greedy': self.policy.update_q_values(action, reward, i)
+                elif self.policy_name == 'gradient': self.policy.update_preferences(action, reward, i)
             if self.policy_name == 'greedy': self.final_qs_from_policy[j] = self.policy.Q
+            elif self.policy_name == 'gradient': 
+                self.final_hs_from_policy[j] = self.policy.H
+                self.final_pis_from_policy[j] = self.policy.pis
+            # Run complete, reset policy parameters
+            if (verbose): print(f'Run {j}', self.policy.H, self.policy.pis)
+            self.policy.reset()
 
     def get_average_rewards(self):
         return np.mean(self.rewards, axis=0)
 
     def get_average_qs(self):
         return np.mean(self.final_qs_from_policy, axis=0)
+
+    def get_average_hs(self):
+        return np.mean(self.final_hs_from_policy, axis=0)
+
+    def get_average_pis(self):
+        return np.mean(self.final_pis_from_policy, axis=0)
 
 # Learning Rate functions
 class LearningRates:
@@ -130,6 +151,8 @@ class RandomPolicy:
     def get_action(self):
         action = np.random.randint(0, len(self.arms))
         return action
+    def reset(self):
+        pass
 
 
 class GreedyPolicy:
@@ -140,6 +163,7 @@ class GreedyPolicy:
         self.alpha = alpha
         self.arms = arms
         self.Q = initial_q_values
+        self.initial_q_constant = initial_q_values
         self.epsilon = epsilon
         assert epsilon >= 0 and epsilon <= 1
 
@@ -153,5 +177,45 @@ class GreedyPolicy:
         return action
 
     def update_q_values(self, action, reward, timestep):
-        # TODO: can technically be vectorized using numpy
         self.Q[action] = self.Q[action] + self.alpha(timestep) * (reward - self.Q[action])
+
+    def reset(self):
+        self.Q = self.initial_q_constant
+
+class GradientPolicy:
+    """
+        Gradient-Bandit policy
+    """
+    def __init__(self, arms, alpha, preferences):
+        self.alpha = alpha
+        self.arms = arms
+        self.H = np.array(preferences, dtype=np.float32)
+        self.initial_H_constant = np.array(preferences, dtype=np.float32)
+        assert len(preferences) == len(arms)
+        self.rewards = [0] # list of rewards, added every time step, useful in calculating R_bar = r1 + r2 + ... + rt / t
+        self.pis = np.exp(self.H) / np.sum(np.exp(self.H))
+
+    def get_average_rewards(self):
+        return np.mean(self.rewards)
+
+    def get_action(self):
+        action = np.random.choice(list(range(len(self.arms))), size=1, replace=False, p=self.pis)[0]
+        return action
+
+    def update_preferences(self, action, reward, timestep):
+        self.rewards.append(reward)
+        r_bar = self.get_average_rewards()
+        # TODO: can technically be vectorized using numpy
+        for arm in range(len(self.arms)):
+            if arm == action: # action selected
+                #print('updating', self.H)
+                self.H[arm] += self.alpha(timestep) * (reward - r_bar) * (1 - self.pis[arm])
+                #print('updated', self.H)
+            else:
+                self.H[arm] -= self.alpha(timestep) * (reward - r_bar) * (self.pis[arm])
+            
+        self.pis = np.exp(self.H) / np.sum(np.exp(self.H))
+        
+    def reset(self):
+        self.rewards = [0]
+        self.H = np.copy(self.initial_H_constant)       

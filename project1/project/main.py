@@ -37,9 +37,8 @@ def simulate_bandit(args):
     # A constant distribution can be added as follows:
     # arms.append(Arm(distribution_type='constant', distribution_args=(5)))
     # random_policy = ('random', {}) # (policy_name, policy_args)
-    
 
-    exp_a, exp_b, exp_c = True, True, False
+    exp_a, exp_b, exp_c = True, True, True
 
     # Part (a)
     # Epsilon-Greedy-Policy
@@ -108,6 +107,31 @@ def simulate_bandit(args):
             print(title, label, bandit.get_average_qs())
         plt.legend()
         plt.savefig(f'b-Figure{fig_num}.png', dpi='figure')
+
+    # Part (c)
+    # Gradient-Based Policy
+    # Alpha = 0.1
+    # Preferences = 0
+
+    if (exp_c):
+        print('Experiment c')
+        alpha = LearningRates.constant_fractional
+        H = [0, 0]
+        title = f'α = 0.1, H = {H}'
+        fig_num = 1
+        
+        plt.figure()
+        gradient_policy = ('gradient', {'alpha': alpha, 'preferences':H})
+
+        bandit = Bandit(arms=arms, policy=gradient_policy, timesteps=args.k, runs=args.r)
+        bandit.simulate()
+        label = title
+        plot_average_reward(bandit, label=label, title=title)
+        # Print statistics for the Tables
+        print(title, 'Final Hs', bandit.get_average_hs(), 'Final probs', bandit.get_average_pis(), 'Final R_bar', np.average(bandit.get_average_rewards()))
+        plt.legend()
+        plt.savefig(f'c-Figure{fig_num}.png', dpi='figure')
+
 
 if __name__ == "__main__":
     np.random.seed(1)
