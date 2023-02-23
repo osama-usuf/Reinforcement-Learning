@@ -73,7 +73,8 @@ def simulate_bandit(args):
                 bandit.simulate()
                 plot_average_reward(bandit, label=label, title=title)
                 # Print statistics for the Tables
-                print(title, label, bandit.get_average_qs())
+                action_frequency = np.unique(bandit.actions, return_counts=True)[1]
+                print(title, label, bandit.get_average_qs(), (action_frequency * 100) / action_frequency.sum(), 'Final R_bar', np.average(bandit.get_average_rewards()))
             plt.legend()
             plt.savefig(f'a-Figure{fig_num}.png', dpi='figure')
             fig_num += 1
@@ -104,7 +105,8 @@ def simulate_bandit(args):
             label = f"Q = {initial_q_values_all[initial_q_values_idx]}"
             plot_average_reward(bandit, label=label, title=title)
             # Print statistics for the Tables
-            print(title, label, bandit.get_average_qs())
+            action_frequency = np.unique(bandit.actions, return_counts=True)[1]
+            print(title, label, bandit.get_average_qs(), (action_frequency * 100) / action_frequency.sum(), np.average(bandit.get_average_rewards()))
         plt.legend()
         plt.savefig(f'b-Figure{fig_num}.png', dpi='figure')
 
@@ -128,7 +130,8 @@ def simulate_bandit(args):
         label = title
         plot_average_reward(bandit, label=label, title=title)
         # Print statistics for the Tables
-        print(title, 'Final Hs', bandit.get_average_hs(), 'Final probs', bandit.get_average_pis(), 'Final R_bar', np.average(bandit.get_average_rewards()))
+        action_frequency = np.unique(bandit.actions, return_counts=True)[1]
+        print(title, 'Final Hs', bandit.get_average_hs(), 'Final probs', bandit.get_average_pis(), (action_frequency * 100) / action_frequency.sum(), 'Final R_bar', np.average(bandit.get_average_rewards()))
         plt.legend()
         plt.savefig(f'c-Figure{fig_num}.png', dpi='figure')
 
