@@ -1,10 +1,31 @@
 import numpy as np
 from matplotlib import pyplot as plt, colors, animation, patches
 
+class RandomPolicy:
+    def __init__(self, maze, num_steps):
+        self.maze = maze
+        self.num_steps = num_steps
+
+    def step_rand_dir(self):
+        # Pick an action randomly
+        return np.random.choice(self.maze.actions, replace=False)
+
+    def generate_trajectory(self):
+        # Simply generates a list of random actions
+        # These do not account for transition probabilities
+        trajectory = []
+        for i in range(self.num_steps): trajectory.append(self.step_rand_dir())
+        return trajectory
+
 class Agent:
-    def __init__(self, maze):
+    def __init__(self, maze, policy, transition_randomness=0.5):
+        self.policy = policy
         self.maze = maze
         self.initialize_maze_attrs()
+        self.transition_randomness = transition_randomness
+        # Pre-populating transition probabilities for a given action, makes the step_randomizer function faster since these no longer have to be recomputed every time
+        self.transition_probs = {}
+        for action in self.maze.actions: self.transition_probs[action] = [1-self.transition_randomness if maze_action == action else self.transition_randomness / 3 for maze_action in self.maze.actions ]
 
     def initialize_maze_attrs(self):
         self.reward_tot = 0
@@ -14,140 +35,43 @@ class Agent:
         self.path = []
         self.path.append(self.curr_pos)
 
-    def step_rand_dir(self):
-        sample = np.random.random()
+    def learn_policy(self):
+        # TODO: The learn policy is actually happening inside the policy, this is more of a use policy and transition probs to actually walk the agent
+        trajectory = self.policy.generate_trajectory()
+        for action in trajectory:
+            action = self.step_randomizer(action)
+            self.step(action)
 
-        if sample <= 0.25:
-            direction = 'up'
-        elif 0.25 < sample <= 0.5:
-            direction = 'left'
-        elif 0.5 < sample <= 0.75:
-            direction = 'down'
-        elif 0.75 < sample <= 1:
-            direction = 'right'
+    def step_randomizer(self, action):
+        '''
+        # An action has been chosen by the policy, so here we account for transition probabilities
+        # The outcome is that the action can be altered/randomized when the agent is attempting to follow it
 
-        direction = self.step_randomizer(direction)
-        self.step(direction)
+        If action right (R) is selected, the agent:
+            moves to the state in right with probability 1 − p
+            moves to the state in left with probability p/3
+            moves to the the state in up with probability p/3
+            moves to the state in down with probability p/3
 
-    def step(self, direction):
+        if any of the neighboring cells are wall, the agent stays in the current cell.
+        '''
+        return np.random.choice(self.maze.actions, replace=False, p=self.transition_probs[action])
+
+    def step(self, action):
+        assert action in self.maze.action_space.keys()
         maze = self.maze.data
-        if direction == 'up':
-            update = self.curr_pos + [-1,0]
-            if maze[[update[0]],[update[1]]] == 1: # wall
-                self.curr_pos = self.curr_pos
-                self.path.append(self.curr_pos)
-                self.reward_check()
-            elif maze[[update[0]],[update[1]]] != 1:
-                self.curr_pos = update
-                self.path.append(self.curr_pos)
-                self.reward_check()
+        # Determine what the updated position would be based on the action that has been chosen
+        updated_pos = self.curr_pos + self.maze.action_space[action]
+        decoded_state = self.maze.decode_state(updated_pos)
+        # Update the position of the agent only if the new state is NOT a wall. This simulates the agent hitting a wall in remaining in its current state.
+        if decoded_state != 'wall': self.curr_pos = updated_pos
+        # Update agent's path + accumulate reward
+        self.path.append(self.curr_pos)
+        self.accumulate_reward()
 
-        elif direction == 'left':
-            update = self.curr_pos + [0,-1]
-            if maze[[update[0]],[update[1]]] == 1:
-                self.curr_pos = self.curr_pos
-                self.path.append(self.curr_pos)
-                self.reward_check()
-            elif maze[[update[0]],[update[1]]] != 1:
-                self.curr_pos = update
-                self.path.append(self.curr_pos)
-                self.reward_check()
-
-        elif direction == 'down':
-            update = self.curr_pos + [1,0]
-            if maze[[update[0]],[update[1]]] == 1:
-                self.curr_pos = self.curr_pos
-                self.path.append(self.curr_pos)
-                self.reward_check()
-            elif maze[[update[0]],[update[1]]] != 1:
-                self.curr_pos = update
-                self.path.append(self.curr_pos)
-                self.reward_check()
-
-        elif direction == 'right':
-            update = self.curr_pos + [0,1]
-            if maze[[update[0]],[update[1]]] == 1:
-                self.curr_pos = self.curr_pos
-                self.path.append(self.curr_pos)
-                self.reward_check()
-            elif maze[[update[0]],[update[1]]] != 1:
-                self.curr_pos = update
-                self.path.append(self.curr_pos)
-                self.reward_check()
-
-        else:
-            print("Invalid direction used")
-
-    def step_randomizer(self, direction):
-
-        random_param = 0.5
-        random_prob = np.random.random_sample()
-
-        if random_prob > (1-random_param):
-            return direction
-        else:
-            # print("random step has occured")
-            if direction == 'up':
-                if random_prob <= ((1-random_param)/3):
-                    direction = 'left'
-                    return direction
-                if ((1-random_param)/3) < random_prob <= (2*(1-random_param)/3):
-                    direction = 'right'
-                    return direction
-                if (2*(1-random_param)/3) < random_prob <= (1-random_param):
-                    direction = 'down'
-                    return direction
-            elif direction == 'left':
-                if random_prob <= ((1-random_param)/3):
-                    direction = 'up'
-                    return direction
-                if ((1-random_param)/3) < random_prob <= (2*(1-random_param)/3):
-                    direction = 'right'
-                    return direction
-                if (2*(1-random_param)/3) < random_prob <= (1-random_param):
-                    direction = 'down'
-                    return direction
-            elif direction == 'right':
-                if random_prob <= ((1-random_param)/3):
-                    direction = 'up'
-                    return direction
-                if ((1-random_param)/3) < random_prob <= (2*(1-random_param)/3):
-                    direction = 'left'
-                    return direction
-                if (2*(1-random_param)/3) < random_prob <= (1-random_param):
-                    direction = 'down'
-                    return direction
-            elif direction == 'down':
-                if random_prob <= ((1-random_param)/3):
-                    direction = 'up'
-                    return direction
-                if ((1-random_param)/3) < random_prob <= (2*(1-random_param)/3):
-                    direction = 'right'
-                    return direction
-                if (2*(1-random_param)/3) < random_prob <= (1-random_param):
-                    direction = 'left'
-                    return direction
-
-    def reward_check(self):
-        maze = self.maze.data
-
-        action = -1
-        oil = -5
-        bump = -10
-        goal = 200
-
-        if maze[[self.curr_pos[0]],[self.curr_pos[1]]] == 2:
-            self.reward_tot += bump
-        if maze[[self.curr_pos[0]],[self.curr_pos[1]]] == 3:
-            self.reward_tot += oil
-        if maze[[self.curr_pos[0]],[self.curr_pos[1]]] == 5:
-            self.reward_tot += goal
-        self.reward_tot += action
+    def accumulate_reward(self):
+        self.reward_tot += self.maze.get_reward(self.curr_pos)
         self.reward_hist.append(self.reward_tot)
-
-    def generate_rand_path(self,num_steps):
-        for i in range(num_steps):
-            self.step_rand_dir()
 
 
 class Maze:
@@ -155,16 +79,29 @@ class Maze:
         self.data = np.loadtxt(maze_file)
         self.start_pos = np.array(start_pos)
 
-        # State - Reward Encodings
-        '''
-        1 = walls
-        0 = free path
-        2 = bump -> -10
-        3 = oil -> -5
-        5 = end -> +200
-        '''
-        # Todo - add checks on maze data validity
+        # State + Reward Encodings 
+        self.action_cost = - 1
+        self.state_encodings = {'wall': 1, 'free': 0, 'bump': 2, 'oil': 3, 'goal': 5} # ensure everything is unique
+        self.rewards_encodings = {'wall': 0, 'free': 0, 'bump': -10, 'oil': -5, 'goal': 200}
+        # For simplicity later, we create an inverse dictionary of the state_encodings. This prevents performing inverse lookups every time a state needs to be decoded
+        self.state_decodings = {v: k for k, v in self.state_encodings.items()}
+        for i in self.rewards_encodings.keys(): self.rewards_encodings[i] += self.action_cost
+        self.action_space = {'up': [1, 0], 'down': [-1, 0], 'left': [0, -1], 'right': [0, 1]}
+        self.actions = list(self.action_space.keys()) # simple list of actions
 
+        # TODO: Add checks on maze data validity
+
+    def decode_state(self, pos):
+        maze = self.data
+        state = maze[pos[0], pos[1]]
+        return self.state_decodings[int(state)]
+
+    def get_reward(self, pos):
+        # Returns the reward generated at position `pos`. In other words, get_reward(pos) = r(s = pos)
+        decoded_state = self.decode_state(pos)
+        return self.rewards_encodings[decoded_state]
+
+    # Functions for visualization
     def animate(self, agent):
         # Given an agent, animate the path it explored
         path = agent.path
