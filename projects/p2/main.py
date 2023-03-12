@@ -1,4 +1,4 @@
-from util import Agent, Maze, RandomPolicy
+from util import Agent, Maze, RandomPolicy, PolicyIteration
 import matplotlib.pyplot as plt
 
 # Load maze object at specified starting position.
@@ -7,7 +7,7 @@ maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4])
 # Experiment 1 - Random Policy
 # Simulates an agent randomly navigating the maze num_steps times, for a total of 500 independent runs
 
-exp_1 = True
+exp_1 = False
 if (exp_1):
     num_run = 10
     data = []
@@ -23,11 +23,20 @@ if (exp_1):
     # Animate the agent. The last random trajectory from the experiment is used.
     maze.animate(agent)
     # Draw the maze, empty
-    maze.draw()
+    # maze.draw()
 
 # Experiment 2 - Vector Form Policy Iteration
 
 exp_2 = True
 if (exp_2):
-    pass
-    # policy = RandomPolicy(num_steps = 50)
+    # Scenario a - Base Scenario
+    p = 0.02
+    gamma = 0.95
+    theta = 0.01 
+    
+    policy = PolicyIteration(maze=maze, transition_randomness=p, gamma=gamma, theta=theta)
+    agent = Agent(maze, policy)
+
+    # Visualize Learned Policy
+    maze.draw(display=True, V=None, pi=policy.pi)
+    maze.draw(display=True, V=policy.V, pi=None)

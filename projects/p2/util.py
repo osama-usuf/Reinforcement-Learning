@@ -17,6 +17,33 @@ class RandomPolicy:
         for i in range(self.num_steps): trajectory.append(self.step_rand_dir())
         return trajectory
 
+class PolicyIteration:
+    def __init__(self, maze, transition_randomness, gamma, theta):
+        '''
+            transition_randomness = p. Agent moves to indended state with 1 - p probability, and a random neighbor with p / 3 probability.
+            gamma = discount factor in the reward; discounts future reward and guarantees convergence
+            theta = a small +ve no. that determines the accuracy of estimation of the policy during evaluation
+        '''
+        self.maze = maze
+        self.transition_randomness, gamma, theta = transition_randomness, gamma, theta
+        self.initialize()
+
+    def initialize(self):
+        # Initialize policy parameters
+        # Firstly, we need a vector of valid states from the maze object
+        n = len(self.maze.state_space)
+        self.V = np.zeros(n)
+        # Action Space
+        # Up = 0, Down = 1, Left = 2, Right = 3
+        self.pi = np.ones(n) * 2
+
+    def generate_trajectory(self):
+        # Simply generates a list of random actions
+        # These do not account for transition probabilities
+        trajectory = []
+        for i in range(self.num_steps): trajectory.append(self.step_rand_dir())
+        return trajectory
+
 class Agent:
     def __init__(self, maze, policy, transition_randomness=0.5):
         self.policy = policy
@@ -86,10 +113,15 @@ class Maze:
         # For simplicity later, we create an inverse dictionary of the state_encodings. This prevents performing inverse lookups every time a state needs to be decoded
         self.state_decodings = {v: k for k, v in self.state_encodings.items()}
         for i in self.rewards_encodings.keys(): self.rewards_encodings[i] += self.action_cost
-        self.action_space = {'up': [1, 0], 'down': [-1, 0], 'left': [0, -1], 'right': [0, 1]}
+        # Action Space
+        # Up = 0, Down = 1, Left = 2, Right = 3
+        self.action_space = {0: [1, 0], 1: [-1, 0], 2: [0, -1], 3: [0, 1]}
         self.actions = list(self.action_space.keys()) # simple list of actions
-
         # TODO: Add checks on maze data validity
+        # State Space, helps when initializing policies separately. All states that aren't a wall are valid.
+        # This is a 2D array - first indexes rows and second indexes cols of the maze
+        self.state_space_idx = np.where(self.data != self.state_encodings['wall'])
+        self.state_space = self.data[self.state_space_idx]
 
     def decode_state(self, pos):
         maze = self.data
@@ -114,7 +146,7 @@ class Maze:
 
         # create a circle to denote position of agent
         center = (path[0][1]+0.5,path[0][0]+0.5)
-        agent = patches.Circle(center,radius = 0.2)
+        agent = patches.Circle(center, radius = 0.2)
         agent.set(alpha = 0.40)
         ax.add_patch(agent)
 
@@ -144,14 +176,13 @@ class Maze:
         anim = animation.FuncAnimation(fig, animate,  init_func = init, frames = len(path), interval = 50, blit = True, repeat=False) 
         self.display()
 
-    def draw(self, display=True):
+    def draw(self, display=True, V=None, pi=None):
         # Draw the grid using pyplot
         fig, ax = plt.subplots()
         colormap = colors.ListedColormap(["white","black","orange","red","green"])
-
         data = np.flipud(self.data)
         ax.invert_yaxis()
-        plt.pcolormesh(data[::-1],cmap=colormap,edgecolors='k', linewidths=0.1)
+        plt.pcolormesh(data[::-1], cmap=colormap, edgecolors='k', linewidths=0.1)
         ax.axis('off')
         red_patch = patches.Patch(edgecolor='k',facecolor='red', label='oil',)
         blk_patch = patches.Patch(edgecolor='k',facecolor='black', label='wall',)
@@ -161,9 +192,28 @@ class Maze:
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5)
                 ,handles=[red_patch,blk_patch,wht_patch,org_patch,grn_patch]
                 ,fancybox=True,shadow=True)
-        if (display): self.display()
-        return fig, ax
         
+        if (V is not None):
+            assert len(V) == len(self.state_space)
+            for idx in range(len(V)):                
+                x, y = self.state_space_idx[1][idx], self.state_space_idx[0][idx]
+                val = V[idx]
+                dy, dx = self.action_space[val]
+                ax.text(x, y + 0.5, str(val // 1))
+        elif (pi is not None):
+            assert len(pi) == len(self.state_space)
+            for idx in range(len(pi)):                
+                x, y = self.state_space_idx[1][idx], self.state_space_idx[0][idx]
+                dy, dx = self.action_space[pi[idx]]
+                ax.arrow(x + 0.5, y + 0.5, dx / 4, -1*dy / 4, head_width=0.4, head_length=0.2, fc='k', ec='k')
+
+        if (display): self.display()
+
+        
+        return fig, ax
+
+
+    # Generic display function
     def display(self):
         # Display the plot
         plt.tight_layout()
