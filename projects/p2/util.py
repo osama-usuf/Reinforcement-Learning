@@ -10,7 +10,7 @@ class RandomPolicy:
         # Pick an action randomly
         return np.random.choice(self.maze.actions, replace=False)
 
-    def generate_trajectory(self):
+    def learn_policy(self):
         # Simply generates a list of random actions
         # These do not account for transition probabilities
         trajectory = []
@@ -25,34 +25,70 @@ class PolicyIteration:
             theta = a small +ve no. that determines the accuracy of estimation of the policy during evaluation
         '''
         self.maze = maze
-        self.transition_randomness, gamma, theta = transition_randomness, gamma, theta
-        self.initialize()
+        self.transition_randomness, self.gamma, self.theta = transition_randomness, gamma, theta
+        self.initialize_policy_attrs()
+        self.max_value_iters = 5
+        self.max_policy_iters = 5
 
-    def initialize(self):
+    def initialize_policy_attrs(self):
         # Initialize policy parameters
         # Firstly, we need a vector of valid states from the maze object
-        n = len(self.maze.state_space)
-        self.V = np.zeros(n)
+        self.n = len(self.maze.state_space)
+        self.V = np.zeros(self.n)
         # Action Space
         # Up = 0, Down = 1, Left = 2, Right = 3
-        self.pi = np.ones(n) * 2
+        self.pi = np.ones(self.n) * 2
 
-    def generate_trajectory(self):
-        # Simply generates a list of random actions
-        # These do not account for transition probabilities
+    def learn_policy(self):
         trajectory = []
-        for i in range(self.num_steps): trajectory.append(self.step_rand_dir())
-        return trajectory
+        for i in range(self.max_policy_iters):
+            # Policy Evaluation
+            iter_num = 0 
+            while iter_num < self.max_value_iters:
+                delta = 0
+                for state_idx in range(self.n):
+                    v = self.V[state_idx]
+                    pi_s = self.pi[state_idx]
+                    # from each state, there are four possible actions
+                    # V(s) += p(s', r | s, self.pi[idx]) [r + gamma * V(s')]
+                    # So, given that we are at state `state_idx` and take an action `pi_s`
+                    # simply iterate over all other state/reward combinations
+                    # TODO: Vectorize
+                    # p(s', r | s, pi_s) is already calculated
+                    transition_probs = self.maze.transition_probs[pi_s]
+                    # We just need to determine what s' is explicitly, then everthing is simple
+                    for action_idx in range(len(self.maze.actions)):
+                        # We are at state state_idx
+                        # Iterate over all neighboring states
+                        next_state_idx, reward = self.maze.get_next_state(state_idx, self.maze.actions[action_idx])
+                        self.V[state_idx] += transition_probs[action_idx] * (reward + self.gamma * self.V[next_state_idx])
+                        delta = max(delta, abs(v - self.V[state_idx]))
+
+                if (delta < self.theta): break
+                iter_num += 1
+
+            # Policy Improvement
+            policy_stable = True
+            for state_idx in range(self.n):
+                old_action = self.pi[state_idx]
+                action_outcomes = []
+                # update the action if a) it improves value, b) it is different from current policy
+                for action_idx in range(len(self.maze.actions)):
+                    # Todo: Action has to be averaged
+                    next_state_idx, reward = self.maze.get_next_state(state_idx, self.maze.actions[action_idx])
+                    action_outcomes.append(transition_probs[action_idx] * (reward + self.gamma * self.V[next_state_idx]))
+                self.pi[state_idx] = (np.argmax(action_outcomes))
+                if (old_action != self.pi[state_idx]):
+                    policy_stable = False
+            if policy_stable:
+                print('Stable Policy found')
+                break
 
 class Agent:
-    def __init__(self, maze, policy, transition_randomness=0.5):
+    def __init__(self, maze, policy):
         self.policy = policy
         self.maze = maze
         self.initialize_maze_attrs()
-        self.transition_randomness = transition_randomness
-        # Pre-populating transition probabilities for a given action, makes the step_randomizer function faster since these no longer have to be recomputed every time
-        self.transition_probs = {}
-        for action in self.maze.actions: self.transition_probs[action] = [1-self.transition_randomness if maze_action == action else self.transition_randomness / 3 for maze_action in self.maze.actions ]
 
     def initialize_maze_attrs(self):
         self.reward_tot = 0
@@ -64,10 +100,10 @@ class Agent:
 
     def learn_policy(self):
         # TODO: The learn policy is actually happening inside the policy, this is more of a use policy and transition probs to actually walk the agent
-        trajectory = self.policy.generate_trajectory()
-        for action in trajectory:
-            action = self.step_randomizer(action)
-            self.step(action)
+        trajectory = self.policy.learn_policy()
+        # for action in trajectory:
+        #     action = self.step_randomizer(action)
+        #     self.step(action)
 
     def step_randomizer(self, action):
         '''
@@ -82,7 +118,7 @@ class Agent:
 
         if any of the neighboring cells are wall, the agent stays in the current cell.
         '''
-        return np.random.choice(self.maze.actions, replace=False, p=self.transition_probs[action])
+        return np.random.choice(self.maze.actions, replace=False, p=self.mazetransition_probs[action])
 
     def step(self, action):
         assert action in self.maze.action_space.keys()
@@ -94,15 +130,12 @@ class Agent:
         if decoded_state != 'wall': self.curr_pos = updated_pos
         # Update agent's path + accumulate reward
         self.path.append(self.curr_pos)
-        self.accumulate_reward()
-
-    def accumulate_reward(self):
         self.reward_tot += self.maze.get_reward(self.curr_pos)
         self.reward_hist.append(self.reward_tot)
 
 
 class Maze:
-    def __init__(self, maze_file, start_pos):
+    def __init__(self, maze_file, start_pos, transition_randomness=0.0):
         self.data = np.loadtxt(maze_file)
         self.start_pos = np.array(start_pos)
 
@@ -123,6 +156,11 @@ class Maze:
         self.state_space_idx = np.where(self.data != self.state_encodings['wall'])
         self.state_space = self.data[self.state_space_idx]
 
+        # Pre-populating transition probabilities for a given action, makes the step_randomizer function faster since these no longer have to be recomputed every time
+        self.transition_randomness = transition_randomness
+        self.transition_probs = {}
+        for action in self.actions: self.transition_probs[action] = [1-self.transition_randomness if maze_action == action else self.transition_randomness / 3 for maze_action in self.actions ]
+
     def decode_state(self, pos):
         maze = self.data
         state = maze[pos[0], pos[1]]
@@ -132,6 +170,43 @@ class Maze:
         # Returns the reward generated at position `pos`. In other words, get_reward(pos) = r(s = pos)
         decoded_state = self.decode_state(pos)
         return self.rewards_encodings[decoded_state]
+
+    def step(self, state, action):
+        '''
+            Pseudo-step function - deterministic
+            Helps in determining what the next state should be, given a state and action
+        ''' 
+        
+        assert action in self.action_space.keys()
+        maze = self.maze.data
+        
+        next_state = 0
+        
+        # Determine what the updated position would be based on the action that has been chosen
+        next_pos = self.curr_pos + self.maze.action_space[action]
+        decoded_state = self.maze.decode_state(updated_pos)
+        # Update the position of the agent only if the new state is NOT a wall. This simulates the agent hitting a wall in remaining in its current state.
+        if decoded_state != 'wall': self.curr_pos = updated_pos
+        # Update agent's path + accumulate reward
+        self.path.append(self.curr_pos)
+        self.reward_tot += self.maze.get_reward(self.curr_pos)
+        self.reward_hist.append(self.reward_tot)
+
+    def get_next_state(self, state, action):
+        # Returns the next state s' if action a is taken at state s
+        # Deterministic, not an actual transition
+        # s is the single-dimensional state_idx from state_space_idx
+        curr_pos = np.array([self.state_space_idx[0][state], self.state_space_idx[1][state]])
+        next_pos = curr_pos + self.action_space[action]
+        
+        decoded_state = self.decode_state(next_pos)
+        # Update the position of the agent only if the new state is NOT a wall. This simulates the agent hitting a wall in remaining in its current state.
+        if decoded_state == 'wall': return state, self.get_reward(curr_pos)
+       
+        next_state = np.where(np.logical_and(self.state_space_idx[0] == next_pos[0], self.state_space_idx[1] == next_pos[1]))[0][0]
+        assert next_state in range(len(self.state_space))
+
+        return next_state, self.get_reward(next_pos)
 
     # Functions for visualization
     def animate(self, agent):
@@ -198,7 +273,6 @@ class Maze:
             for idx in range(len(V)):                
                 x, y = self.state_space_idx[1][idx], self.state_space_idx[0][idx]
                 val = V[idx]
-                dy, dx = self.action_space[val]
                 ax.text(x, y + 0.5, str(val // 1))
         elif (pi is not None):
             assert len(pi) == len(self.state_space)
@@ -206,12 +280,8 @@ class Maze:
                 x, y = self.state_space_idx[1][idx], self.state_space_idx[0][idx]
                 dy, dx = self.action_space[pi[idx]]
                 ax.arrow(x + 0.5, y + 0.5, dx / 4, -1*dy / 4, head_width=0.4, head_length=0.2, fc='k', ec='k')
-
         if (display): self.display()
-
-        
         return fig, ax
-
 
     # Generic display function
     def display(self):
