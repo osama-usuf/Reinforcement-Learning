@@ -1,4 +1,4 @@
-from util import Agent, Maze, RandomPolicy, PolicyIteration
+from util import Agent, Maze, RandomPolicy, PolicyIteration, ValueIteration
 import matplotlib.pyplot as plt
 
 # Load maze object at specified starting position.
@@ -26,12 +26,12 @@ if (exp_1):
 exp_2 = True
 if (exp_2):
     # Scenario a - Base Scenario
-    p = 0.2
+    p = 0.0
     gamma = 0.95
     theta = 0.01
     
     maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4], transition_randomness=p)
-    policy = PolicyIteration(maze=maze, transition_randomness=p, gamma=gamma, theta=theta)
+    policy = PolicyIteration(maze=maze, gamma=gamma, theta=theta)
     agent = Agent(maze, policy)
 
     # Manual Policy
@@ -47,6 +47,23 @@ if (exp_2):
     agent.learn_policy()
     # Visualize Learned Policy
     maze.draw(display=True, V=None, pi=policy.pi)
-    # print(policy.V)
+    maze.draw(display=True, V=policy.V, pi=None)
+    maze.animate(agent)
+
+
+exp_3 = True
+if (exp_3):
+    # Scenario a - Base Scenario
+    p = 0.0
+    gamma = 0.95
+    theta = 0.01
+    
+    maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4], transition_randomness=p)
+    policy = ValueIteration(maze=maze, gamma=gamma, theta=theta)
+    agent = Agent(maze, policy)
+
+    agent.learn_policy()
+    # Visualize Learned Policy
+    maze.draw(display=True, V=None, pi=policy.pi)
     maze.draw(display=True, V=policy.V, pi=None)
     maze.animate(agent)
