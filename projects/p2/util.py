@@ -2,20 +2,24 @@ import numpy as np
 from matplotlib import pyplot as plt, colors, animation, patches
 
 class RandomPolicy:
-    def __init__(self, maze, num_steps):
+    def __init__(self, maze):
         self.maze = maze
-        self.num_steps = num_steps
+        self.initialize_policy_attrs()
+
+    def initialize_policy_attrs(self):
+        # Initialize policy parameters
+        # Action Space
+        # Up = 0, Down = 1, Left = 2, Right = 3
+        self.pi = np.random.choice(self.maze.actions, size=self.maze.data.shape)
 
     def step_rand_dir(self):
         # Pick an action randomly
         return np.random.choice(self.maze.actions, replace=False)
 
     def learn_policy(self):
-        # Simply generates a list of random actions
-        # These do not account for transition probabilities
-        trajectory = []
-        for i in range(self.num_steps): trajectory.append(self.step_rand_dir())
-        return trajectory
+        # Does not account for transition probabilities
+        return self.pi
+
 
 class PolicyIteration:
     def __init__(self, maze, transition_randomness, gamma, theta):
@@ -38,7 +42,6 @@ class PolicyIteration:
         self.pi = np.ones_like(self.maze.data) * 0
 
     def learn_policy(self):
-        trajectory = []
         for i in range(self.max_policy_iters):
             # Policy Evaluation
             iter_num = 0 
@@ -74,14 +77,15 @@ class PolicyIteration:
                     policy_stable = False
 
             if policy_stable:
-                print('Stable Policy found')
-                break
+                print(f'Stable Policy found in {i}/{self.max_policy_iters} iterations.')
+                return self.pi # return optimal stable policy
 
 class Agent:
     def __init__(self, maze, policy):
         self.policy = policy
         self.maze = maze
         self.initialize_maze_attrs()
+        self.max_steps = 100
 
     def initialize_maze_attrs(self):
         self.reward_tot = 0
@@ -93,10 +97,17 @@ class Agent:
 
     def learn_policy(self):
         # TODO: The learn policy is actually happening inside the policy, this is more of a use policy and transition probs to actually walk the agent
-        trajectory = self.policy.learn_policy()
-        # for action in trajectory:
-        #     action = self.step_randomizer(action)
-        #     self.step(action)
+        policy = self.policy.learn_policy()
+
+        decoded_state = self.maze.decode_state(self.curr_pos)
+        # Continue transitions and moving until the final goal state has been reached, or if max iterations pass
+        iter_num = 0
+        while decoded_state != 'goal' and iter_num < self.max_steps:
+            action = policy[self.curr_pos[0], self.curr_pos[1]]
+            action = self.step_randomizer(action)
+            self.step(action)
+            decoded_state = self.maze.decode_state(self.curr_pos)
+            iter_num += 1
 
     def step_randomizer(self, action):
         '''
