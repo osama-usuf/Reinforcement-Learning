@@ -321,7 +321,7 @@ class Maze:
         if (V is not None):
             for iy, ix in np.ndindex(self.data.shape):
                 val = V[iy, ix]        
-                ax.text(ix + 0.5, iy + 0.5, str(int(val)), horizontalalignment='center', verticalalignment='center')
+                ax.text(ix + 0.5, iy + 0.5, str(round(val)), horizontalalignment='center', verticalalignment='center')
         elif (pi is not None):
             for iy, ix in np.ndindex(self.data.shape):
                 dy, dx = self.action_space[pi[iy, ix]]
