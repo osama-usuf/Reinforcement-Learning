@@ -26,7 +26,7 @@ if (exp_1):
 exp_2 = True
 if (exp_2):
     # Scenario a - Base Scenario
-    p = 0.0
+    p = 0.02
     gamma = 0.95
     theta = 0.01
     
@@ -48,13 +48,13 @@ if (exp_2):
     # Visualize Learned Policy
     maze.draw(display=True, V=None, pi=policy.pi)
     maze.draw(display=True, V=policy.V, pi=None)
-    maze.animate(agent)
+    # maze.animate(agent)
 
 
-exp_3 = True
+exp_3 = False
 if (exp_3):
     # Scenario a - Base Scenario
-    p = 0.0
+    p = 0.02
     gamma = 0.95
     theta = 0.01
     

@@ -38,7 +38,7 @@ class PolicyIteration:
         self.V = np.zeros_like(self.maze.data)
         # Action Space
         # Up = 0, Down = 1, Left = 2, Right = 3
-        self.pi = np.ones_like(self.maze.data) * 0
+        self.pi = np.ones_like(self.maze.data) * 2
 
     def learn_policy(self):
         for i in range(self.max_policy_iters):
@@ -80,6 +80,8 @@ class PolicyIteration:
             if policy_stable:
                 print(f'Stable Policy found in {i}/{self.max_policy_iters} iterations.')
                 return self.pi # return optimal stable policy
+        # for completeness, we do return unstable policy if not found
+        return self.pi
 
 
 class ValueIteration:
@@ -100,7 +102,7 @@ class ValueIteration:
         self.V = np.zeros_like(self.maze.data)
         # Action Space
         # Up = 0, Down = 1, Left = 2, Right = 3
-        self.pi = np.ones_like(self.maze.data) * 0
+        self.pi = np.ones_like(self.maze.data) * 2
 
     def learn_policy(self):
         # for i in range(self.max_policy_iters):
@@ -203,7 +205,7 @@ class Maze:
         # State + Reward Encodings 
         self.action_cost = - 1
         self.state_encodings = {'wall': 1, 'free': 0, 'bump': 2, 'oil': 3, 'goal': 5} # ensure everything is unique
-        self.rewards_encodings = {'wall': 0, 'free': 0, 'bump': -10, 'oil': -5, 'goal': 200}
+        self.rewards_encodings = {'free': 0, 'bump': -10, 'oil': -5, 'goal': 200}
         # For simplicity later, we create an inverse dictionary of the state_encodings. This prevents performing inverse lookups every time a state needs to be decoded
         self.state_decodings = {v: k for k, v in self.state_encodings.items()}
         for i in self.rewards_encodings.keys(): self.rewards_encodings[i] += self.action_cost
@@ -229,6 +231,7 @@ class Maze:
 
     def get_reward(self, pos):
         # Returns the reward generated at position `pos`. In other words, get_reward(pos) = r(s = pos)
+        # Special case: If the position is a wall, agent should get reward for the current state
         decoded_state = self.decode_state(pos)
         return self.rewards_encodings[decoded_state]
 
@@ -240,14 +243,18 @@ class Maze:
         curr_pos = np.array([x, y])
         curr_state = self.data[x, y]
         next_states = []
+
         if (self.state_decodings[curr_state] != 'wall'): # current state is valid
             # given action, there are 4-possible next states, each having a different transition probability depending on the action iteself
             probs = self.transition_probs[action]
             for idx in range(len(probs)): #idx is the same for probs as well as actions
                 p = probs[idx]
                 x_new, y_new = curr_pos + self.action_space[idx]
+                new_state = self.data[x_new, y_new]
+                if (self.state_decodings[new_state] == 'wall'): x_new, y_new = curr_pos
                 new_pos = np.array([x_new, y_new])
                 r = self.get_reward(new_pos)
+                # if (self.state_decodings[new_state] == 'goal'): r = 0
                 next_states.append((new_pos, r, p))
         return next_states
 
