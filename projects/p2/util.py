@@ -310,14 +310,13 @@ class Maze:
         ax.invert_yaxis()
         plt.pcolormesh(data[::-1], cmap=colormap, edgecolors='k', linewidths=0.1)
         ax.axis('off')
-        red_patch = patches.Patch(edgecolor='k',facecolor='red', label='oil',)
-        blk_patch = patches.Patch(edgecolor='k',facecolor='black', label='wall',)
-        wht_patch = patches.Patch(edgecolor='k',facecolor='white', label='free space',)
-        org_patch = patches.Patch(edgecolor='k',facecolor='orange', label='bump',)
-        grn_patch = patches.Patch(edgecolor='k',facecolor='green', label='end point',)
-        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5)
-                ,handles=[red_patch,blk_patch,wht_patch,org_patch,grn_patch]
-                ,fancybox=True,shadow=True)
+        patch_list = [ patches.Patch(edgecolor='k',facecolor='red', label='oil',),
+                    patches.Patch(edgecolor='k',facecolor='black', label='wall',),
+                    patches.Patch(edgecolor='k',facecolor='white', label='free space',),
+                    patches.Patch(edgecolor='k',facecolor='orange', label='bump',),
+                    patches.Patch(edgecolor='k',facecolor='green', label='end point',),
+                    patches.Patch(edgecolor='k',facecolor='blue', label='start',),]
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), handles=patch_list, fancybox=True, shadow=True)
         
         if (V is not None):
             for iy, ix in np.ndindex(self.data.shape):
