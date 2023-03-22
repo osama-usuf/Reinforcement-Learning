@@ -1,4 +1,5 @@
-from util import Agent, Maze, RandomPolicy, PolicyIteration, ValueIteration
+from util import Agent, Maze
+from policies import RandomPolicy, PolicyIteration, ValueIteration
 import matplotlib.pyplot as plt
 
 # Load maze object at specified starting position.
@@ -25,19 +26,6 @@ if (exp_1):
 
 exp_2 = True
 if (exp_2):
-    # a - Base Scenario
-    '''
-        Stochasticity is low, so once the final state is reached, there's a very high likelihood (98%) that
-        the agent remains in the goal state (and keeps getting the corresponding reward). 
-        This is why the V values are really high in this scenario.
-    '''
-    # p = 0.02
-    # gamma = 0.95
-    # theta = 0.01
-    
-    # maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4], transition_randomness=p)
-    # policy = PolicyIteration(maze=maze, gamma=gamma, theta=theta)
-    # agent = Agent(maze, policy)
 
     # # Manual Policy
     # # left left up right right down
@@ -49,11 +37,28 @@ if (exp_2):
     # # agent.step(1)
     # # maze.animate(agent)
 
-    # agent.learn_policy()
-    # # Visualize Learned Policy
-    # maze.draw(display=True, V=None, pi=policy.pi)
-    # maze.draw(display=True, V=policy.V, pi=None)
-    # maze.animate(agent)
+    # a - Base Scenario
+    '''
+        Stochasticity is low, so once the final state is reached, there's a very high likelihood (98%) that
+        the agent remains in the goal state (and keeps getting the corresponding reward). 
+        This is why the V values are really high in this scenario.
+    '''
+    p = 0.02
+    gamma = 0.95
+    theta = 0.01
+    
+    maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4], transition_randomness=p)
+    policy = PolicyIteration(maze=maze, gamma=gamma, theta=theta)
+    agent = Agent(maze, policy)
+
+    agent.learn_policy()
+    # Visualize Learned Policy
+    maze.draw(display=True, V=None, pi=policy.pi)
+    maze.draw(display=True, V=policy.V, pi=None)
+    agent.follow_policy(optimal=True)
+    maze.animate(agent)
+    agent.follow_policy(optimal=False)
+    maze.animate(agent)
 
     # b - Large Stochasticity
     p = 0.5
@@ -68,25 +73,31 @@ if (exp_2):
     # Visualize Learned Policy
     maze.draw(display=True, V=None, pi=policy.pi)
     maze.draw(display=True, V=policy.V, pi=None)
+    agent.follow_policy(optimal=True)
+    maze.animate(agent)
+    agent.follow_policy(optimal=False)
     maze.animate(agent)
 
     # c - Small Discount Factor
-    # p = 0.02
-    # gamma = 0.55
-    # theta = 0.01
+    p = 0.02
+    gamma = 0.55
+    theta = 0.01
     
-    # maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4], transition_randomness=p)
-    # policy = PolicyIteration(maze=maze, gamma=gamma, theta=theta)
-    # agent = Agent(maze, policy)
+    maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4], transition_randomness=p)
+    policy = PolicyIteration(maze=maze, gamma=gamma, theta=theta)
+    agent = Agent(maze, policy)
 
-    # agent.learn_policy()
-    # # Visualize Learned Policy
-    # maze.draw(display=True, V=None, pi=policy.pi)
-    # maze.draw(display=True, V=policy.V, pi=None)
-    # maze.animate(agent)
+    agent.learn_policy()
+    # Visualize Learned Policy
+    maze.draw(display=True, V=None, pi=policy.pi)
+    maze.draw(display=True, V=policy.V, pi=None)
+    agent.follow_policy(optimal=True)
+    maze.animate(agent)
+    agent.follow_policy(optimal=False)
+    maze.animate(agent)
 
 
-exp_3 = False
+exp_3 = True
 if (exp_3):
     # Scenario a - Base Scenario
     p = 0.02
@@ -101,4 +112,43 @@ if (exp_3):
     # Visualize Learned Policy
     maze.draw(display=True, V=None, pi=policy.pi)
     maze.draw(display=True, V=policy.V, pi=None)
+    agent.follow_policy(optimal=True)
+    maze.animate(agent)
+    agent.follow_policy(optimal=False)
+    maze.animate(agent)
+
+    # b - Large Stochasticity
+    p = 0.5
+    gamma = 0.95
+    theta = 0.01
+    
+    maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4], transition_randomness=p)
+    policy = ValueIteration(maze=maze, gamma=gamma, theta=theta)
+    agent = Agent(maze, policy)
+
+    agent.learn_policy()
+    # Visualize Learned Policy
+    maze.draw(display=True, V=None, pi=policy.pi)
+    maze.draw(display=True, V=policy.V, pi=None)
+    agent.follow_policy(optimal=True)
+    maze.animate(agent)
+    agent.follow_policy(optimal=False)
+    maze.animate(agent)
+
+    # c - Small Discount Factor
+    p = 0.02
+    gamma = 0.55
+    theta = 0.01
+    
+    maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4], transition_randomness=p)
+    policy = ValueIteration(maze=maze, gamma=gamma, theta=theta)
+    agent = Agent(maze, policy)
+
+    agent.learn_policy()
+    # Visualize Learned Policy
+    maze.draw(display=True, V=None, pi=policy.pi)
+    maze.draw(display=True, V=policy.V, pi=None)
+    agent.follow_policy(optimal=True)
+    maze.animate(agent)
+    agent.follow_policy(optimal=False)
     maze.animate(agent)
