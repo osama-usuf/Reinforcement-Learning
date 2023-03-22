@@ -1,9 +1,13 @@
 from util import Agent, Maze
 from policies import RandomPolicy, PolicyIteration, ValueIteration
 import matplotlib.pyplot as plt
+import time
 
 # Load maze object at specified starting position.
 maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4])
+
+# Draw the base maze
+# maze.draw(display=True, V=None, pi=None)
 
 # Experiment 1 - Random Policy
 # Simulates an agent randomly navigating the maze num_steps times
@@ -51,7 +55,10 @@ if (exp_2):
     policy = PolicyIteration(maze=maze, gamma=gamma, theta=theta)
     agent = Agent(maze, policy)
 
+    start = time.time()
     agent.learn_policy()
+    end = time.time()
+    print(end - start)
     # Visualize Learned Policy
     maze.draw(display=True, V=None, pi=policy.pi)
     maze.draw(display=True, V=policy.V, pi=None)
@@ -69,7 +76,10 @@ if (exp_2):
     policy = PolicyIteration(maze=maze, gamma=gamma, theta=theta)
     agent = Agent(maze, policy)
 
+    start = time.time()
     agent.learn_policy()
+    end = time.time()
+    print(end - start)
     # Visualize Learned Policy
     maze.draw(display=True, V=None, pi=policy.pi)
     maze.draw(display=True, V=policy.V, pi=None)
@@ -87,7 +97,10 @@ if (exp_2):
     policy = PolicyIteration(maze=maze, gamma=gamma, theta=theta)
     agent = Agent(maze, policy)
 
+    start = time.time()
     agent.learn_policy()
+    end = time.time()
+    print(end - start)
     # Visualize Learned Policy
     maze.draw(display=True, V=None, pi=policy.pi)
     maze.draw(display=True, V=policy.V, pi=None)
@@ -108,7 +121,10 @@ if (exp_3):
     policy = ValueIteration(maze=maze, gamma=gamma, theta=theta)
     agent = Agent(maze, policy)
 
+    start = time.time()
     agent.learn_policy()
+    end = time.time()
+    print(end - start)
     # Visualize Learned Policy
     maze.draw(display=True, V=None, pi=policy.pi)
     maze.draw(display=True, V=policy.V, pi=None)
@@ -126,7 +142,10 @@ if (exp_3):
     policy = ValueIteration(maze=maze, gamma=gamma, theta=theta)
     agent = Agent(maze, policy)
 
+    start = time.time()
     agent.learn_policy()
+    end = time.time()
+    print(end - start)
     # Visualize Learned Policy
     maze.draw(display=True, V=None, pi=policy.pi)
     maze.draw(display=True, V=policy.V, pi=None)
@@ -144,7 +163,10 @@ if (exp_3):
     policy = ValueIteration(maze=maze, gamma=gamma, theta=theta)
     agent = Agent(maze, policy)
 
+    start = time.time()
     agent.learn_policy()
+    end = time.time()
+    print(end - start)
     # Visualize Learned Policy
     maze.draw(display=True, V=None, pi=policy.pi)
     maze.draw(display=True, V=policy.V, pi=None)
