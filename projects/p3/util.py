@@ -33,6 +33,7 @@ class Agent:
             self.step(action)
             decoded_state = self.maze.decode_state(self.curr_pos)
             iter_num += 1
+        return iter_num < self.max_steps
 
     def step(self, action):
         assert action in self.maze.action_space.keys()
@@ -122,16 +123,16 @@ class Maze:
 
     def get_next_state_reward(self, x, y, action):
         '''
-            Returns a list of 3-tuples: (s', r, p)
-            s' = (x', y') of the new state
+            Returns a list of 3-tuples: (reward r, next state s', terminal state?)
         '''
+        terminate = False
         curr_pos = np.array([x, y])
         curr_state = self.data[x, y]
         decoded_state = self.decode_state(curr_pos)
         if decoded_state == 'goal':
-            print('state is already goal state')
             r = self.get_reward(curr_pos)
-            return r, curr_pos, True
+            terminate = True
+            return r, curr_pos, terminate
         else:
             # Randomize action according to the maze principle
             action = self.step_randomizer(action) # TODO: Confirm if this needs to happen
@@ -140,7 +141,11 @@ class Maze:
             if (self.state_decodings[new_state] == 'wall'): x_new, y_new = curr_pos
             new_pos = np.array([x_new, y_new])
             r = self.get_reward(new_pos)
-            return r, new_pos, False
+
+            decoded_state = self.decode_state(new_pos)
+            if decoded_state == 'goal': terminate = True
+
+            return r, new_pos, terminate
 
     # Functions for visualization
     def animate(self, agent):
