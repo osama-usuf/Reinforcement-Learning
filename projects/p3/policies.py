@@ -182,8 +182,6 @@ class SARSA:
             for step in range(self.steps):
                 # take action a, get new state and a reward r
                 r, s_prime, terminate = self.maze.get_next_state_reward(s[0], s[1], a)
-                
-                # self.rewards[episode, step] = r
                 a_prime = self.greedy_action(s_prime)
                 self.Q[s[0], s[1], a] = self.Q[s[0], s[1], a] + self.alpha * (r + self.gamma * self.Q[s_prime[0], s_prime[1], a_prime] - self.Q[s[0], s[1], a])
                 s = np.copy(s_prime)
@@ -202,4 +200,62 @@ class SARSA:
 
 class QLearning:
     def __init__(self, maze, gamma, alpha, epsilon):
-        pass
+        '''
+            gamma = discount factor in the reward; discounts future reward and guarantees convergence
+            alpha = TD learning rate. The factor which the TD error gets multiplied with
+            epsilon = epsilon for the epsilon-greedy step
+        '''
+        self.maze = maze
+        self.gamma, self.alpha, self.epsilon = gamma, alpha, epsilon
+        self.episodes = 1000
+        self.steps = 1000
+        self.initialize_policy_attrs()
+
+    def initialize_policy_attrs(self):
+        # Initialize policy parameters
+        self.n_actions = len(self.maze.actions)
+        # Initialize Q matrix for all (state, action) pairs
+        self.Q = np.zeros((*self.maze.data.shape, self.n_actions))
+        # Action Space
+        # Up = 0, Down = 1, Left = 2, Right = 3
+        self.pi = np.ones_like(self.maze.data) * 2
+        # self.rewards = np.zeros((self.episodes, self.steps))
+        self.episode_rewards = []
+
+    def greedy_action(self, s):
+        # draw an epsilon greedy action
+        # generate a random uniform number
+        toss = np.random.random()
+        if toss <= 1 - self.epsilon: # greedy choice, a = argmax(Q_i)
+            action = np.argmax(self.Q[s[0], s[1]])
+        else:
+            action = np.random.randint(0, self.n_actions) # random choice
+        return action
+
+    def learn_policy(self):
+        for episode in range(self.episodes):
+            episode_reward = 0
+            # Print every 100 episodes
+            if (episode % 100 == 0): print(f'Episode {episode}/{self.episodes}')
+            s = self.maze.start_pos
+            a = self.greedy_action(s)
+            for step in range(self.steps):
+                # take action a, get new state and a reward r
+                r, s_prime, terminate = self.maze.get_next_state_reward(s[0], s[1], a)
+                #a_prime = self.greedy_action(s_prime)
+                #a_prime = np.argmax(self.Q[s[0], s[1]])
+                # todo: have this as a function
+                a_prime = np.random.choice(np.where(self.Q[s_prime[0], s_prime[1]] == np.amax(self.Q[s_prime[0], s_prime[1]]))[0])
+                self.Q[s[0], s[1], a] = self.Q[s[0], s[1], a] + self.alpha * (r + self.gamma * self.Q[s_prime[0], s_prime[1], a_prime] - self.Q[s[0], s[1], a])
+                s = np.copy(s_prime)
+
+                episode_reward += r
+
+                if terminate: break # s is now terminal
+
+            self.episode_rewards.append(episode_reward / (step + 1))
+
+        for iy, ix in np.ndindex(self.pi.shape):
+            self.pi[iy, ix] = np.argmax(self.Q[iy, ix])
+
+        return self.pi

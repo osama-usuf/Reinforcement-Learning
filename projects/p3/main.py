@@ -168,19 +168,21 @@ if (exp_3):
 
 
 # Project 3
-exp_4 = True
 seed = 1
 random.seed(seed)
 np.random.seed(seed)
+
+p = 0.02
+gamma = 0.95
+alpha = 0.3
+epsilon = 0.1
+runs = 10
+
+exp_4 = False
+exp_5 = True
+
 if (exp_4):
     # SARSA algorithm
-    p = 0.02
-    gamma = 0.95
-    alpha = 0.3
-    epsilon = 0.1
-    
-    runs = 10
-
     print('='*40)
     print('SARSA Algorithm')
     print('='*40)
@@ -203,6 +205,38 @@ if (exp_4):
             print('Goal state NOT found')
 
         np.savetxt(f'data/SARSA_{run}.txt', policy.episode_rewards)
+        
+        # Visualize Learned Policy
+        if (run + 1 == run_to_plot):
+            maze.draw(display=True, V=None, pi=policy.pi)
+            agent.follow_policy(optimal=True)
+            maze.animate(agent)
+    print(f'{goals_found}/{runs} goal states found!')
+
+if (exp_5):
+    # QLearning algorithm
+    print('='*40)
+    print('QLearning Algorithm')
+    print('='*40)
+
+    goals_found = 0
+
+    run_to_plot = 10
+    for run in range(runs):
+        print(f'\nIndependent run {run+1}/{runs}')
+        maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4], transition_randomness=p)
+        policy = QLearning(maze=maze, gamma=gamma, alpha=alpha, epsilon=epsilon)
+        agent = Agent(maze, policy)
+        agent.learn_policy()
+        print(f'Learning Terminated')
+        goal_found = agent.follow_policy(optimal=True)
+        if goal_found: 
+            goals_found += 1
+            print('Goal state has been found')
+        else:
+            print('Goal state NOT found')
+
+        np.savetxt(f'data/QLearning_{run}.txt', policy.episode_rewards)
         
         # Visualize Learned Policy
         if (run + 1 == run_to_plot):
