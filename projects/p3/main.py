@@ -5,16 +5,19 @@ import time
 import random
 import numpy as np
 
-# Load maze object at specified starting position.
-maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4])
+'''
+Project 2 - Experiments 1, 2, 3
+Project 3 - Experiments 4, 5
+'''
 
 # Project 2
-
 # Experiment 1 - Random Policy
 # Simulates an agent randomly navigating the maze num_steps times
 
 exp_1 = False
 if (exp_1):
+    # Load maze object at specified starting position.
+    maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4])
     policy = RandomPolicy(maze=maze)
     agent = Agent(maze, policy)
     agent.learn_policy()

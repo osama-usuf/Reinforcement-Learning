@@ -31,7 +31,7 @@ with plt.style.context('fivethirtyeight'):
     plt.tight_layout()
     plt.ylim(-1.5, 3)
     plt.plot(sarsa_rewards)
-    plt.savefig('plots/sarsa.png', dpi='figure')
+    plt.savefig('plots/sarsa_reward.png', dpi='figure')
 
     plt.figure(figsize=figsize)
     plt.xlabel('Episode (#)')
@@ -39,7 +39,7 @@ with plt.style.context('fivethirtyeight'):
     plt.tight_layout()
     plt.plot(qlearning_rewards, c='red')
     plt.ylim(-1.5, 3)
-    plt.savefig('plots/qlearning.png', dpi='figure')
+    plt.savefig('plots/qlearning_reward.png', dpi='figure')
 
     plt.figure(figsize=figsize)
     plt.xlabel('Episode (#)')
@@ -49,4 +49,4 @@ with plt.style.context('fivethirtyeight'):
     plt.tight_layout()
     plt.legend(fontsize=24)
     plt.ylim(-1.5, 3)
-    plt.savefig('plots/comparison.png', dpi='figure')
+    plt.savefig('plots/comparison_reward.png', dpi='figure')
