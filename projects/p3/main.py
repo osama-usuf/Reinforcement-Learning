@@ -178,7 +178,7 @@ alpha = 0.3
 epsilon = 0.1
 runs = 10
 
-exp_4 = False
+exp_4 = True
 exp_5 = True
 
 if (exp_4):
@@ -221,7 +221,7 @@ if (exp_5):
 
     goals_found = 0
 
-    run_to_plot = 10
+    run_to_plot = 1
     for run in range(runs):
         print(f'\nIndependent run {run+1}/{runs}')
         maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4], transition_randomness=p)

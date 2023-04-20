@@ -238,13 +238,11 @@ class QLearning:
             # Print every 100 episodes
             if (episode % 100 == 0): print(f'Episode {episode}/{self.episodes}')
             s = self.maze.start_pos
-            a = self.greedy_action(s)
             for step in range(self.steps):
+                a = self.greedy_action(s)
                 # take action a, get new state and a reward r
                 r, s_prime, terminate = self.maze.get_next_state_reward(s[0], s[1], a)
-                #a_prime = self.greedy_action(s_prime)
-                #a_prime = np.argmax(self.Q[s[0], s[1]])
-                # todo: have this as a function
+
                 a_prime = np.random.choice(np.where(self.Q[s_prime[0], s_prime[1]] == np.amax(self.Q[s_prime[0], s_prime[1]]))[0])
                 self.Q[s[0], s[1], a] = self.Q[s[0], s[1], a] + self.alpha * (r + self.gamma * self.Q[s_prime[0], s_prime[1], a_prime] - self.Q[s[0], s[1], a])
                 s = np.copy(s_prime)
