@@ -139,7 +139,7 @@ class ValueIteration:
         return self.pi
 
 class SARSA:
-    def __init__(self, maze, gamma, alpha, epsilon):
+    def __init__(self, maze, gamma, alpha, epsilon, episodes, steps):
         '''
             gamma = discount factor in the reward; discounts future reward and guarantees convergence
             alpha = TD learning rate. The factor which the TD error gets multiplied with
@@ -147,8 +147,8 @@ class SARSA:
         '''
         self.maze = maze
         self.gamma, self.alpha, self.epsilon = gamma, alpha, epsilon
-        self.episodes = 1000
-        self.steps = 1000
+        self.episodes = episodes
+        self.steps = steps
         self.initialize_policy_attrs()
 
     def initialize_policy_attrs(self):
@@ -199,7 +199,7 @@ class SARSA:
         return self.pi
 
 class QLearning:
-    def __init__(self, maze, gamma, alpha, epsilon):
+    def __init__(self, maze, gamma, alpha, epsilon, episodes, steps):
         '''
             gamma = discount factor in the reward; discounts future reward and guarantees convergence
             alpha = TD learning rate. The factor which the TD error gets multiplied with
@@ -207,8 +207,8 @@ class QLearning:
         '''
         self.maze = maze
         self.gamma, self.alpha, self.epsilon = gamma, alpha, epsilon
-        self.episodes = 1000
-        self.steps = 1000
+        self.episodes = episodes
+        self.steps = steps
         self.initialize_policy_attrs()
 
     def initialize_policy_attrs(self):

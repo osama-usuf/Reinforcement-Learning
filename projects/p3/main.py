@@ -199,7 +199,7 @@ if (exp_4):
     for run in range(runs):
         print(f'\nIndependent run {run+1}/{runs}')
         maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4], transition_randomness=p)
-        policy = SARSA(maze=maze, gamma=gamma, alpha=alpha, epsilon=epsilon, episodes=episodes, steps=steps)
+        policy = SARSA(maze=maze, gamma=gamma, alpha=alpha, epsilon=epsilon, episodes=episodes, steps=episode_steps)
         agent = Agent(maze, policy, policy_steps)
         agent.learn_policy()
         print(f'Learning Terminated')
@@ -231,7 +231,7 @@ if (exp_5):
     for run in range(runs):
         print(f'\nIndependent run {run+1}/{runs}')
         maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4], transition_randomness=p)
-        policy = QLearning(maze=maze, gamma=gamma, alpha=alpha, epsilon=epsilon, episodes=episodes, steps=steps)
+        policy = QLearning(maze=maze, gamma=gamma, alpha=alpha, epsilon=epsilon, episodes=episodes, steps=episode_steps)
         agent = Agent(maze, policy, policy_steps)
         agent.learn_policy()
         print(f'Learning Terminated')
