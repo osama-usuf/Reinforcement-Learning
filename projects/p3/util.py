@@ -2,11 +2,11 @@ import numpy as np
 from matplotlib import pyplot as plt, colors, animation, patches
 
 class Agent:
-    def __init__(self, maze, policy):
+    def __init__(self, maze, policy, policy_steps):
         self.policy = policy
         self.maze = maze
         self.initialize_maze_attrs()
-        self.max_steps = 500
+        self.max_steps = policy_steps
 
     def initialize_maze_attrs(self):
         self.reward_tot = 0

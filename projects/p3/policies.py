@@ -167,7 +167,7 @@ class SARSA:
         # generate a random uniform number
         toss = np.random.random()
         if toss <= 1 - self.epsilon: # greedy choice, a = argmax(Q_i)
-            action = np.argmax(self.Q[s[0], s[1]])
+            action = np.random.choice(np.where(self.Q[s[0], s[1]] == np.amax(self.Q[s[0], s[1]]))[0])
         else:
             action = np.random.randint(0, self.n_actions) # random choice
         return action
@@ -227,7 +227,8 @@ class QLearning:
         # generate a random uniform number
         toss = np.random.random()
         if toss <= 1 - self.epsilon: # greedy choice, a = argmax(Q_i)
-            action = np.argmax(self.Q[s[0], s[1]])
+            # action = np.argmax(self.Q[s[0], s[1]])
+            action = np.random.choice(np.where(self.Q[s[0], s[1]] == np.amax(self.Q[s[0], s[1]]))[0])
         else:
             action = np.random.randint(0, self.n_actions) # random choice
         return action
