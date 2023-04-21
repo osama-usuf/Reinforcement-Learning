@@ -196,13 +196,17 @@ if (exp_4):
     goals_found = 0
 
     run_to_plot = 10
+    time_sarsa = []
     for run in range(runs):
+        start = time.time()
         print(f'\nIndependent run {run+1}/{runs}')
         maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4], transition_randomness=p)
         policy = SARSA(maze=maze, gamma=gamma, alpha=alpha, epsilon=epsilon, episodes=episodes, steps=episode_steps)
         agent = Agent(maze, policy, policy_steps)
         agent.learn_policy()
         print(f'Learning Terminated')
+        end = time.time()
+        time_sarsa.append(end - start)
         goal_found = agent.follow_policy(optimal=True)
         if goal_found: 
             goals_found += 1
@@ -218,6 +222,7 @@ if (exp_4):
             agent.follow_policy(optimal=True)
             maze.animate(agent)
     print(f'{goals_found}/{runs} goal states found!')
+    print('Average SARSA learning time:', np.average(time_sarsa))
 
 if (exp_5):
     # QLearning algorithm
@@ -228,13 +233,17 @@ if (exp_5):
     goals_found = 0
 
     run_to_plot = 1
+    time_q = []
     for run in range(runs):
+        start = time.time()
         print(f'\nIndependent run {run+1}/{runs}')
         maze = Maze(maze_file='mazes/base.txt', start_pos=[15, 4], transition_randomness=p)
         policy = QLearning(maze=maze, gamma=gamma, alpha=alpha, epsilon=epsilon, episodes=episodes, steps=episode_steps)
         agent = Agent(maze, policy, policy_steps)
         agent.learn_policy()
         print(f'Learning Terminated')
+        end = time.time()
+        time_q.append(end - start)
         goal_found = agent.follow_policy(optimal=True)
         if goal_found: 
             goals_found += 1
@@ -250,3 +259,4 @@ if (exp_5):
             agent.follow_policy(optimal=True)
             maze.animate(agent)
     print(f'{goals_found}/{runs} goal states found!')
+    print('Average Q learning time:', np.average(time_q))
