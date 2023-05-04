@@ -5,6 +5,8 @@ import random
 # State B = 1
 # Action a1 = 0
 # Action a2 = 1
+state_encodings = {0: 'A', 1: 'B'}
+action_encodings = {0: 'a1', 1: 'a2'}
 
 def get_reward(s, a, s_prime):
     r = 0
@@ -48,14 +50,23 @@ def generate_episode():
         s = s_prime
     return episode
 
+def convert_episode(episode):
+    friendly_ep = []
+    for s, a, s_prime, r in episode:
+        friendly_ep.append((state_encodings[s], action_encodings[a], state_encodings[s_prime], r))
+    return friendly_ep
+
 def monte_carlo_policy():
     for iters in range(max_iters):
         episode = generate_episode()
+        friendly_episode = convert_episode(episode)
         print('=' * 100)
         print(f'Episode {iters+1}: {episode}')
+        print(f'Episode {iters+1}: {friendly_episode}')
         # Update Q Values
         for i in range(len(episode)):
             s, a, s_prime, r = episode[i]
+            print(f'\nFor state-action pair ({s}, {a})')
             R = r
             power = 1
             for j in range(i+1, len(episode)):
@@ -63,15 +74,17 @@ def monte_carlo_policy():
                 power += 1
             returns[s][a].append(R)
             Q[s][a] = np.average(returns[s][a])
+            print('returns', returns)
+            print('Q', Q)
 
         # Update policy
         curr_policy = pi.copy()
         for k in range(len(episode)):
             s, _, _, _ = episode[k]
             pi[s] = np.argmax(Q[s])
-        # print('Q', Q)
-        print('Returns', returns)
-        print('Policy', pi)
+        print('\nFinal Q', Q)
+        print('Final Returns', returns)
+        print('Final Policy', pi)
         new_policy = pi.copy()
 
         if (new_policy == curr_policy and iters != 0):
@@ -89,5 +102,5 @@ if __name__ == '__main__':
     episode_length = 5
 
     max_iters = 5
-    epsilon = 0.9
+    epsilon = 0.4
     monte_carlo_policy()
