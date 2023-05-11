@@ -38,7 +38,7 @@ def simulate_bandit(args):
     # arms.append(Arm(distribution_type='constant', distribution_args=(5)))
     # random_policy = ('random', {}) # (policy_name, policy_args)
 
-    exp_a, exp_b, exp_c = True, True, True
+    exp_a, exp_b, exp_c = True, False, False
 
     # Part (a)
     # Epsilon-Greedy-Policy

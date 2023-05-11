@@ -19,10 +19,11 @@ def plot_average_reward_actions(bandit):
 
 def plot_average_reward(bandit, label, title):
     mean_rewards = bandit.get_average_rewards()
+    mean_rewards = [np.average(mean_rewards[:i]) for i in range(1, len(mean_rewards))]
     # Plots can be modified here
     x = list(range(len(mean_rewards)))
     plt.title(f'Multi-arm Bandit Solver with {len(bandit.arms)} arm(s)\n{bandit.policy_name.capitalize()} Policy with {title}')
     plt.plot(x, mean_rewards, label=label)
     plt.ylabel(f'Accumulated Reward (r)\nAveraged over {bandit.runs} independent runs')
-    plt.ylim(-0.5, 8)
+    #plt.ylim(-0.5, 8)
     plt.xlabel('Timestep (t)')
